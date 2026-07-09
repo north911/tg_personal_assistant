@@ -8,13 +8,12 @@ A personal Telegram bot / assistant.
 
 ## Tech Stack
 
-- **Language**: Java 25 (Java 24 was requested, but Spring Initializr only offers 17/21/25/26 — 25 is the closest LTS)
+- **Language**: Java 25
 - **Framework**: Spring Boot 4.1.0
-- **Persistence**: Spring Data JPA + `org.xerial:sqlite-jdbc`, with `hibernate-community-dialects` (`org.hibernate.community.dialect.SQLiteDialect`) since core Hibernate has no built-in SQLite dialect
-- **Web**: `spring-boot-starter-webmvc` (Boot 4.1 renamed `spring-boot-starter-web`)
+- **Persistence**: Spring Data JPA
 - **Database**: SQLite (file at `data/tg-personal-assistant.db`, configured in `application.properties`)
 - **Deployment**: Docker (the entire app runs in containers)
-- **Build tool**: Maven (generated via start.spring.io)
+- **Build tool**: Maven
 
 ## Development
 
@@ -28,3 +27,4 @@ A personal Telegram bot / assistant.
 - Keep configuration (bot token, secrets) out of source control — use environment variables / `.env` loaded via Docker Compose, never commit tokens.
 - SQLite database file should live in a mounted Docker volume so data persists across container rebuilds.
 - Prefer Spring's standard layering (controller/service/repository or command-handler equivalents for bot updates) — update this once bot-specific code exists.
+- Never ask to start application until I directly ask you to do it
