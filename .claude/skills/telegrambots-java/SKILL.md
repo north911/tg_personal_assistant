@@ -31,37 +31,6 @@ GitHub wiki at https://github.com/rubenlagus/TelegramBots/wiki
 
 In 6.5.0+ the token is passed to the constructor; you only override `getBotUsername()`:
 
-```java
-@Component
-public class HelloBot extends TelegramLongPollingBot {
-
-    public HelloBot(@Value("${telegram.bot.token}") String token) {
-        super(token);
-    }
-
-    @Override
-    public String getBotUsername() {
-        return "my_assistant_bot";
-    }
-
-    @Override
-    public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            long chatId = update.getMessage().getChatId();
-            SendMessage msg = SendMessage.builder()
-                    .chatId(chatId)
-                    .text("hello")
-                    .build();
-            try {
-                execute(msg);            // execute(...) sends via the Bot API
-            } catch (TelegramApiException e) {
-                // log it — don't swallow silently
-            }
-        }
-    }
-}
-```
-
 ### Registration with the Spring Boot starter
 With `telegrambots-spring-boot-starter` on the classpath, **any Spring bean that is a
 `LongPollingBot` is auto-registered** on startup — no manual

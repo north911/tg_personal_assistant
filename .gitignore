@@ -35,3 +35,10 @@ build/
 ### Local secrets ###
 .env
 !.env.example
+
+### SQLite database (keep the folder, ignore the data files) ###
+/db/*.db
+/db/*.db-journal
+/db/*.db-wal
+/db/*.db-shm
+!/db/.gitkeep
