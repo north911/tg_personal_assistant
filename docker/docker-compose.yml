@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      # Build context is the project root so the Dockerfile can reach src/, pom.xml, etc.
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: tg-personal-assistant:latest
+    container_name: tg-personal-assistant
+    restart: unless-stopped
+    # Bot credentials (TELEGRAM_BOT_TOKEN / TELEGRAM_BOT_USERNAME) are injected
+    # straight into the container from the project-root .env file (never committed).
+    env_file:
+      - ../.env
+    volumes:
+      # Persist the SQLite database across container rebuilds.
+      - ../db:/app/db

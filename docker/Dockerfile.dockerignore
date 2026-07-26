@@ -1,0 +1,35 @@
+# Applies to docker/Dockerfile (BuildKit picks up <dockerfile>.dockerignore).
+# Paths are relative to the build context (the project root).
+
+# Build output — keep the packaged jar, exclude the rest
+target/*
+!target/*.jar
+
+# Local secrets — supplied at runtime via env_file, must never enter the image
+.env
+
+# Local SQLite data — mounted as a volume instead
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm
+
+# IDE / tooling
+.idea/
+.vscode/
+*.iml
+.settings/
+.classpath
+.project
+
+# VCS & docs
+.git/
+.gitignore
+HELP.md
+README.md
+
+# Claude tooling
+.claude/
+
+# Docker files themselves
+docker/
