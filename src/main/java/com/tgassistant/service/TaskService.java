@@ -35,4 +35,23 @@ public class TaskService {
     public List<Task> tasksOfType(TaskType type) {
         return taskRepository.findByType(type);
     }
+
+    /**
+     * Removes one task, provided it really is of the given type.
+     *
+     * @return whether it was there to remove — false when an old button names a task that
+     *         has since been deleted
+     */
+    @Transactional
+    public boolean deleteTask(long id, TaskType type) {
+        return taskRepository.deleteByIdAndType(id, type) > 0;
+    }
+
+    /**
+     * @return how many tasks were removed
+     */
+    @Transactional
+    public long deleteAllOfType(TaskType type) {
+        return taskRepository.deleteByType(type);
+    }
 }

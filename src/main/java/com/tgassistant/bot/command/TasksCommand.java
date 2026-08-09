@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.tgassistant.domain.Task;
 import com.tgassistant.domain.TaskType;
 import com.tgassistant.service.TaskService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -77,13 +76,7 @@ public class TasksCommand implements BotCommand {
     }
 
     private CommandReply listTasks(TaskType type) {
-        List<Task> tasks = taskService.tasksOfType(type);
-        if (tasks.isEmpty()) {
-            return CommandReply.text("No %s tasks yet.".formatted(type.label()));
-        }
-        return CommandReply.text(tasks.stream()
-                .map(task -> "- " + task.getDescription())
-                .collect(Collectors.joining("\n", "Your %s tasks:\n".formatted(type.label()), "")));
+        return CommandReply.text(TaskListFormatter.format(taskService.tasksOfType(type), type));
     }
 
     private static Optional<TaskType> parseType(String arguments) {
