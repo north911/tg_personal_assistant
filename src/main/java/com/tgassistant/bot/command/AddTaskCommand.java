@@ -24,22 +24,28 @@ public abstract class AddTaskCommand implements BotCommand {
     }
 
     @Override
-    public String description() {
-        return "Add %s tasks: %s <task>[, <task>, ...]".formatted(label(), name());
+    public String label() {
+        String type = typeLabel();
+        return Character.toUpperCase(type.charAt(0)) + type.substring(1) + " tasks";
     }
 
     @Override
-    public String execute(CommandRequest request) {
-        List<String> descriptions = splitDescriptions(request.arguments());
-        if (descriptions.isEmpty()) {
-            return "Usage: %s <task>[, <task>, ...]".formatted(name());
-        }
-        taskService.addTasks(descriptions, taskType);
-        return formatConfirmation(descriptions);
+    public String description() {
+        return "Add %s tasks: %s <task>[, <task>, ...]".formatted(typeLabel(), name());
     }
 
-    private String label() {
-        return taskType.name().toLowerCase();
+    @Override
+    public CommandReply execute(CommandRequest request) {
+        List<String> descriptions = splitDescriptions(request.arguments());
+        if (descriptions.isEmpty()) {
+            return CommandReply.text("Usage: %s <task>[, <task>, ...]".formatted(name()));
+        }
+        taskService.addTasks(descriptions, taskType);
+        return CommandReply.text(formatConfirmation(descriptions));
+    }
+
+    private String typeLabel() {
+        return taskType.label();
     }
 
     private static List<String> splitDescriptions(String arguments) {
@@ -52,7 +58,7 @@ public abstract class AddTaskCommand implements BotCommand {
     private String formatConfirmation(List<String> descriptions) {
         String plural = descriptions.size() == 1 ? "task" : "tasks";
         StringBuilder reply = new StringBuilder(
-                "Added %d %s %s:".formatted(descriptions.size(), label(), plural));
+                "Added %d %s %s:".formatted(descriptions.size(), typeLabel(), plural));
         descriptions.forEach(description -> reply.append("\n- ").append(description));
         return reply.toString();
     }

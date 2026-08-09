@@ -5,14 +5,14 @@ import com.tgassistant.service.TaskService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AddDailyTaskCommand extends AddTaskCommand {
+public class WeeklyTaskCommand extends AddTaskCommand {
 
-    public AddDailyTaskCommand(TaskService taskService) {
-        super(taskService, TaskType.DAILY);
+    public WeeklyTaskCommand(TaskService taskService) {
+        super(taskService, TaskType.WEEKLY);
     }
 
     @Override
     public String name() {
-        return "/day";
+        return "/week";
     }
 }

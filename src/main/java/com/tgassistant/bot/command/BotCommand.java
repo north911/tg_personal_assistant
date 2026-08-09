@@ -15,6 +15,13 @@ public interface BotCommand {
     String name();
 
     /**
+     * Short human-readable name for the command's button in the {@code /tasks} menu, e.g.
+     * {@code Daily tasks}. Kept separate from {@link #description()}, which is a full usage
+     * line and far too long to fit on a button.
+     */
+    String label();
+
+    /**
      * One-line explanation shown by {@code /help}.
      */
     String description();
@@ -22,5 +29,5 @@ public interface BotCommand {
     /**
      * Runs the command and returns the reply to send back.
      */
-    String execute(CommandRequest request);
+    CommandReply execute(CommandRequest request);
 }

@@ -7,5 +7,12 @@ package com.tgassistant.domain;
  */
 public enum TaskType {
     DAILY,
-    WEEKLY
+    WEEKLY;
+
+    /**
+     * Human-readable form used in replies and button labels, e.g. {@code daily}.
+     */
+    public String label() {
+        return name().toLowerCase();
+    }
 }

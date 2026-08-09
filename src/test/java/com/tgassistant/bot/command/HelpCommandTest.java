@@ -17,9 +17,9 @@ class HelpCommandTest {
                 new StubCommand("/week", "Add weekly tasks"),
                 new StubCommand("/day", "Add daily tasks")));
 
-        String reply = help.execute(new CommandRequest("/help", "", 7L));
+        CommandReply reply = help.execute(new CommandRequest("/help", "", 7L));
 
-        assertThat(reply).isEqualTo("""
+        assertThat(reply.text()).isEqualTo("""
                 Available commands:
                 /day - Add daily tasks
                 /week - Add weekly tasks""");
@@ -36,7 +36,12 @@ class HelpCommandTest {
     private record StubCommand(String name, String description) implements BotCommand {
 
         @Override
-        public String execute(CommandRequest request) {
+        public String label() {
+            return name;
+        }
+
+        @Override
+        public CommandReply execute(CommandRequest request) {
             throw new UnsupportedOperationException();
         }
     }

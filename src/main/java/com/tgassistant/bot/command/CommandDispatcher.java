@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -18,8 +19,9 @@ import org.springframework.stereotype.Component;
 public class CommandDispatcher {
 
     private final Map<String, BotCommand> commandsByName;
+    private final Map<String, String> commandsByButtonLabel;
 
-    public CommandDispatcher(List<BotCommand> commands) {
+    public CommandDispatcher(List<BotCommand> commands, ChatKeyboard chatKeyboard) {
         Map<String, BotCommand> byName = new LinkedHashMap<>();
         for (BotCommand command : commands) {
             String name = command.name();
@@ -37,19 +39,30 @@ public class CommandDispatcher {
         // Not Map.copyOf: that leaves iteration order unspecified, and commands() should
         // stay in a stable order for /help and Telegram command registration.
         this.commandsByName = Collections.unmodifiableMap(byName);
+        this.commandsByButtonLabel = chatKeyboard.buttons().stream()
+                .collect(Collectors.toUnmodifiableMap(ReplyButton::label, ReplyButton::command));
     }
 
     /**
+     * Routes a typed message, a tapped panel button — which arrives as its plain label and is
+     * translated to the command it stands for first — or an inline button's callback data,
+     * which is already a command. All three take one path.
+     *
      * @return the reply to send back, or empty when the message is not a known command.
      */
-    public Optional<String> dispatch(String messageText, long chatId) {
-        return CommandRequest.parse(messageText, chatId)
+    public Optional<CommandReply> dispatch(String messageText, long chatId) {
+        String resolved = commandsByButtonLabel.getOrDefault(messageText.strip(), messageText);
+        return CommandRequest.parse(resolved, chatId)
                 .flatMap(request -> Optional.ofNullable(commandsByName.get(request.command()))
                         .map(command -> command.execute(request)));
     }
 
     /**
-     * All registered commands, for {@code /help} and Telegram command registration.
+     * All registered commands, in registration order.
+     *
+     * <p>No production caller today: {@code /help} and the {@code /tasks} menu each build their
+     * own list from an {@code ObjectProvider<BotCommand>}, because as commands themselves they
+     * cannot depend on this dispatcher without a startup cycle.
      */
     public List<BotCommand> commands() {
         return List.copyOf(commandsByName.values());

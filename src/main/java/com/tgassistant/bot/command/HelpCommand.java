@@ -25,15 +25,20 @@ public class HelpCommand implements BotCommand {
     }
 
     @Override
+    public String label() {
+        return "Help";
+    }
+
+    @Override
     public String description() {
         return "Show the available commands";
     }
 
     @Override
-    public String execute(CommandRequest request) {
-        return commands.orderedStream()
+    public CommandReply execute(CommandRequest request) {
+        return CommandReply.text(commands.orderedStream()
                 .sorted(Comparator.comparing(BotCommand::name))
                 .map(command -> "%s - %s".formatted(command.name(), command.description()))
-                .collect(Collectors.joining("\n", "Available commands:\n", ""));
+                .collect(Collectors.joining("\n", "Available commands:\n", "")));
     }
 }

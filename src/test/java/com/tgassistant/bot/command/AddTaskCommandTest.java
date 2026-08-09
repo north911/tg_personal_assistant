@@ -31,31 +31,40 @@ class AddTaskCommandTest {
 
     @Test
     void storesCommaSeparatedDescriptionsAsDailyTasks() {
-        AddTaskCommand command = new AddDailyTaskCommand(taskService);
+        AddTaskCommand command = new DailyTaskCommand(taskService);
 
-        String reply = command.execute(request("buy milk, walk the dog ,  call mom"));
+        CommandReply reply = command.execute(request("buy milk, walk the dog ,  call mom"));
 
         verify(taskService).addTasks(descriptionsCaptor.capture(), eq(TaskType.DAILY));
         assertThat(descriptionsCaptor.getValue()).containsExactly("buy milk", "walk the dog", "call mom");
-        assertThat(reply).isEqualTo("Added 3 daily tasks:\n- buy milk\n- walk the dog\n- call mom");
+        assertThat(reply.text()).isEqualTo("Added 3 daily tasks:\n- buy milk\n- walk the dog\n- call mom");
     }
 
     @Test
     void storesSingleDescriptionAsWeeklyTask() {
-        AddTaskCommand command = new AddWeeklyTaskCommand(taskService);
+        AddTaskCommand command = new WeeklyTaskCommand(taskService);
 
-        String reply = command.execute(new CommandRequest("/week", "finish the report", 42L));
+        CommandReply reply = command.execute(new CommandRequest("/week", "finish the report", 42L));
 
         verify(taskService).addTasks(List.of("finish the report"), TaskType.WEEKLY);
-        assertThat(reply).isEqualTo("Added 1 weekly task:\n- finish the report");
+        assertThat(reply.text()).isEqualTo("Added 1 weekly task:\n- finish the report");
+    }
+
+    /**
+     * The face of the button in the {@code /tasks} menu — the command name never shows there.
+     */
+    @Test
+    void labelsItselfReadably() {
+        assertThat(new DailyTaskCommand(taskService).label()).isEqualTo("Daily tasks");
+        assertThat(new WeeklyTaskCommand(taskService).label()).isEqualTo("Weekly tasks");
     }
 
     @Test
     void repliesWithUsageWhenNoDescriptionsGiven() {
-        AddTaskCommand command = new AddDailyTaskCommand(taskService);
+        AddTaskCommand command = new DailyTaskCommand(taskService);
 
-        assertThat(command.execute(request(""))).isEqualTo("Usage: /day <task>[, <task>, ...]");
-        assertThat(command.execute(request("  ,  , "))).isEqualTo("Usage: /day <task>[, <task>, ...]");
+        assertThat(command.execute(request("")).text()).isEqualTo("Usage: /day <task>[, <task>, ...]");
+        assertThat(command.execute(request("  ,  , ")).text()).isEqualTo("Usage: /day <task>[, <task>, ...]");
         verifyNoInteractions(taskService);
     }
 }

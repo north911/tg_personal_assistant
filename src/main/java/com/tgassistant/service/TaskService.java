@@ -27,4 +27,12 @@ public class TaskService {
                 .toList();
         return taskRepository.saveAll(tasks);
     }
+
+    /**
+     * Every stored {@link Task} of the given type, oldest first.
+     */
+    @Transactional(readOnly = true)
+    public List<Task> tasksOfType(TaskType type) {
+        return taskRepository.findByType(type);
+    }
 }
