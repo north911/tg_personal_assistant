@@ -20,8 +20,11 @@ public class CommandDispatcher {
 
     private final Map<String, BotCommand> commandsByName;
     private final Map<String, String> commandsByButtonLabel;
+    private final PendingInputStore pendingInput;
 
-    public CommandDispatcher(List<BotCommand> commands, ChatKeyboard chatKeyboard) {
+    public CommandDispatcher(List<BotCommand> commands, ChatKeyboard chatKeyboard,
+                             PendingInputStore pendingInput) {
+        this.pendingInput = pendingInput;
         Map<String, BotCommand> byName = new LinkedHashMap<>();
         for (BotCommand command : commands) {
             String name = command.name();
@@ -45,16 +48,40 @@ public class CommandDispatcher {
 
     /**
      * Routes a typed message, a tapped panel button — which arrives as its plain label and is
-     * translated to the command it stands for first — or an inline button's callback data,
-     * which is already a command. All three take one path.
+     * translated to the command it stands for first — an inline button's callback data, which
+     * is already a command, or an answer to a command that asked for input. All take one path.
      *
      * @return the reply to send back, or empty when the message is not a known command.
      */
     public Optional<CommandReply> dispatch(String messageText, long chatId) {
-        String resolved = commandsByButtonLabel.getOrDefault(messageText.strip(), messageText);
+        String resolved = resolve(messageText, chatId);
         return CommandRequest.parse(resolved, chatId)
                 .flatMap(request -> Optional.ofNullable(commandsByName.get(request.command()))
                         .map(command -> command.execute(request)));
+    }
+
+    /**
+     * Turns whatever arrived into the command it stands for.
+     *
+     * <p>The order is the whole point. A panel button sends its plain label, so labels are
+     * matched before anything else — otherwise tapping TASKS while a prompt is open would file
+     * "TASKS" as a task. Commands come next and abandon the prompt, so changing your mind
+     * mid-question works. Only what is left over answers the prompt.
+     */
+    private String resolve(String messageText, long chatId) {
+        String text = messageText.strip();
+        String buttonCommand = commandsByButtonLabel.get(text);
+        if (buttonCommand != null) {
+            pendingInput.clear(chatId);
+            return buttonCommand;
+        }
+        if (text.startsWith("/")) {
+            pendingInput.clear(chatId);
+            return messageText;
+        }
+        return pendingInput.consume(chatId)
+                .map(command -> "%s %s".formatted(command, text))
+                .orElse(messageText);
     }
 
     /**

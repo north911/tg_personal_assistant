@@ -49,19 +49,19 @@ public abstract class TaskTypeCommand implements BotCommand {
     public CommandReply execute(CommandRequest request) {
         String arguments = request.arguments();
         if (arguments.isEmpty()) {
-            return actionMenu();
+            return actionMenu(request.chatId());
         }
         String token = firstWord(arguments);
         return actions.stream()
                 .filter(action -> action.token().equals(token))
                 .findFirst()
-                .map(action -> action.apply(context(), afterFirstWord(arguments)))
+                .map(action -> action.apply(context(request.chatId()), afterFirstWord(arguments)))
                 // Anything that is not an action token is a task to add.
                 .orElseGet(() -> addTasks(arguments));
     }
 
-    private CommandReply actionMenu() {
-        TaskActionContext context = context();
+    private CommandReply actionMenu(long chatId) {
+        TaskActionContext context = context(chatId);
         List<ReplyButton> buttons = actions.stream()
                 .flatMap(action -> action.menuLabel().stream()
                         .map(menuLabel -> new ReplyButton(menuLabel, context.commandFor(action))))
@@ -78,8 +78,8 @@ public abstract class TaskTypeCommand implements BotCommand {
         return CommandReply.text(formatConfirmation(descriptions));
     }
 
-    private TaskActionContext context() {
-        return new TaskActionContext(taskService, taskType, name());
+    private TaskActionContext context(long chatId) {
+        return new TaskActionContext(taskService, taskType, name(), chatId);
     }
 
     private String typeLabel() {

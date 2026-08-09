@@ -12,8 +12,10 @@ import com.tgassistant.service.TaskService;
  *
  * @param commandName the owning command as typed, e.g. {@code /day} — actions build their
  *                    buttons' callback data from it
+ * @param chatId      chat the tap came from, for actions that have to remember something
+ *                    about it until the next message
  */
-public record TaskActionContext(TaskService taskService, TaskType taskType, String commandName) {
+public record TaskActionContext(TaskService taskService, TaskType taskType, String commandName, long chatId) {
 
     public List<Task> tasks() {
         return taskService.tasksOfType(taskType);

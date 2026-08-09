@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ForceReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -102,12 +103,28 @@ public class MainTelegramBot implements SpringLongPollingBot, LongPollingSingleT
     }
 
     /**
-     * A message carries either an inline keyboard or the persistent panel, never both.
-     * Telegram remembers the panel from the previous message, so it stays on screen while
-     * an inline keyboard is showing.
+     * A message carries exactly one markup: inline buttons, a request to type something, or
+     * the persistent panel. Telegram remembers the panel from the previous message, so it
+     * stays on screen while either of the others is showing.
      */
     private ReplyKeyboard replyMarkupFor(CommandReply reply) {
-        return reply.hasButtons() ? toInlineKeyboard(reply.buttons()) : persistentKeyboard;
+        if (reply.hasButtons()) {
+            return toInlineKeyboard(reply.buttons());
+        }
+        return reply.inputPlaceholder()
+                .<ReplyKeyboard>map(MainTelegramBot::toForceReply)
+                .orElse(persistentKeyboard);
+    }
+
+    /**
+     * Opens the user's input box focused on this message, which is the closest Telegram gets
+     * to a form field for an ordinary bot.
+     */
+    private static ForceReplyKeyboard toForceReply(String placeholder) {
+        return ForceReplyKeyboard.builder()
+                .forceReply(true)
+                .inputFieldPlaceholder(placeholder)
+                .build();
     }
 
     private void answerCallbackQuery(String callbackQueryId) {

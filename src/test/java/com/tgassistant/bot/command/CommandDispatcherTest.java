@@ -33,10 +33,12 @@ class CommandDispatcherTest {
         }
     }
 
-    private static CommandDispatcher dispatcherWith(String... names) {
+    private final PendingInputStore pendingInput = new PendingInputStore();
+
+    private CommandDispatcher dispatcherWith(String... names) {
         return new CommandDispatcher(Arrays.stream(names)
                 .map(name -> (BotCommand) new StubCommand(name))
-                .toList(), new ChatKeyboard());
+                .toList(), new ChatKeyboard(), pendingInput);
     }
 
     @Test
@@ -125,8 +127,69 @@ class CommandDispatcherTest {
 
     @Test
     void unknownCommandsDoNotReachOtherCommands() {
-        CommandDispatcher dispatcher = new CommandDispatcher(List.of(), new ChatKeyboard());
+        CommandDispatcher dispatcher = new CommandDispatcher(List.of(), new ChatKeyboard(), pendingInput);
 
         assertThat(dispatcher.dispatch("/anything", 7L)).isEmpty();
+    }
+
+    // --- answering a command that asked for input -------------------------------------------
+
+    @Test
+    void handsPlainTextToTheCommandThatAskedForIt() {
+        CommandDispatcher dispatcher = dispatcherWith("/day");
+        pendingInput.await(7L, "/day");
+
+        assertThat(dispatcher.dispatch("buy milk", 7L)).contains(CommandReply.text("/day|buy milk|7"));
+    }
+
+    @Test
+    void answersThePromptOnlyOnce() {
+        CommandDispatcher dispatcher = dispatcherWith("/day");
+        pendingInput.await(7L, "/day");
+
+        dispatcher.dispatch("buy milk", 7L);
+
+        assertThat(dispatcher.dispatch("walk the dog", 7L)).isEmpty();
+    }
+
+    /**
+     * A panel tap arrives as plain text too, so without label-matching first, tapping TASKS
+     * with a prompt open would file "TASKS" as a task.
+     */
+    @Test
+    void aPanelTapAbandonsAnOpenPromptRatherThanAnsweringIt() {
+        CommandDispatcher dispatcher = dispatcherWith("/tasks", "/day");
+        pendingInput.await(7L, "/day");
+
+        assertThat(dispatcher.dispatch("TASKS", 7L)).contains(CommandReply.text("/tasks||7"));
+        assertThat(pendingInput.consume(7L)).isEmpty();
+    }
+
+    /**
+     * Changing your mind mid-question has to work, including via an inline button, whose
+     * callback data is a command.
+     */
+    @Test
+    void aCommandAbandonsAnOpenPromptRatherThanAnsweringIt() {
+        CommandDispatcher dispatcher = dispatcherWith("/day", "/help");
+        pendingInput.await(7L, "/day");
+
+        assertThat(dispatcher.dispatch("/help", 7L)).contains(CommandReply.text("/help||7"));
+        assertThat(pendingInput.consume(7L)).isEmpty();
+    }
+
+    @Test
+    void plainTextIsStillIgnoredWhenNothingWasAsked() {
+        CommandDispatcher dispatcher = dispatcherWith("/day");
+
+        assertThat(dispatcher.dispatch("buy milk", 7L)).isEmpty();
+    }
+
+    @Test
+    void aPromptOnlyAnswersItsOwnChat() {
+        CommandDispatcher dispatcher = dispatcherWith("/day");
+        pendingInput.await(7L, "/day");
+
+        assertThat(dispatcher.dispatch("buy milk", 8L)).isEmpty();
     }
 }
