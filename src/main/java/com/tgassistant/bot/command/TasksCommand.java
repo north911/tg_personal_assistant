@@ -19,9 +19,8 @@ import org.springframework.stereotype.Component;
  * bot is reachable by tapping. Given a task type ({@code /tasks daily}) it lists those tasks
  * instead — that branch has no button of its own and is only reachable by typing.
  *
- * <p>Takes an {@link ObjectProvider} rather than a {@code List<BotCommand>} for the same
- * reason {@link HelpCommand} does: it is itself a {@code BotCommand} and would otherwise
- * depend on itself while the context starts up.
+ * <p>Takes an {@link ObjectProvider} rather than a {@code List<BotCommand>} because it is
+ * itself a {@code BotCommand} and would otherwise depend on itself while the context starts up.
  */
 @Component
 public class TasksCommand implements BotCommand {

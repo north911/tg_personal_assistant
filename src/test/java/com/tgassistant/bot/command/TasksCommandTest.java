@@ -39,8 +39,7 @@ class TasksCommandTest {
     void offersEveryRegisteredCommandAsAButton() {
         TasksCommand command = commandWith(
                 new StubCommand("/week", "Weekly tasks"),
-                new StubCommand("/day", "Daily tasks"),
-                new StubCommand("/help", "Help"));
+                new StubCommand("/day", "Daily tasks"));
 
         CommandReply reply = command.execute(request(""));
 
@@ -49,7 +48,6 @@ class TasksCommandTest {
         // command is what comes back as callback data.
         assertThat(reply.buttons()).containsExactly(
                 new ReplyButton("Daily tasks", "/day"),
-                new ReplyButton("Help", "/help"),
                 new ReplyButton("Weekly tasks", "/week"));
         verifyNoInteractions(taskService);
     }
@@ -93,7 +91,7 @@ class TasksCommandTest {
         List<BotCommand> registered = List.of(commands);
         ObjectProvider<BotCommand> provider = mock(ObjectProvider.class);
         // lenient: the task-listing tests never reach the command menu.
-        lenient().when(provider.orderedStream()).thenAnswer(invocation -> registered.stream());
+        lenient().when(provider.orderedStream()).thenAnswer(_ -> registered.stream());
         return provider;
     }
 

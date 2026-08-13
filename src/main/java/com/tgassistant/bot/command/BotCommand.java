@@ -22,7 +22,8 @@ public interface BotCommand {
     String label();
 
     /**
-     * One-line explanation shown by {@code /help}.
+     * One-line usage explanation, e.g. as shown when a command is given arguments it
+     * does not understand.
      */
     String description();
 

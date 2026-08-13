@@ -171,10 +171,10 @@ class CommandDispatcherTest {
      */
     @Test
     void aCommandAbandonsAnOpenPromptRatherThanAnsweringIt() {
-        CommandDispatcher dispatcher = dispatcherWith("/day", "/help");
+        CommandDispatcher dispatcher = dispatcherWith("/day", "/week");
         pendingInput.await(7L, "/day");
 
-        assertThat(dispatcher.dispatch("/help", 7L)).contains(CommandReply.text("/help||7"));
+        assertThat(dispatcher.dispatch("/week", 7L)).contains(CommandReply.text("/week||7"));
         assertThat(pendingInput.consume(7L)).isEmpty();
     }
 

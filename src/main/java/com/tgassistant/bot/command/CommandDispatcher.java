@@ -40,7 +40,7 @@ public class CommandDispatcher {
             }
         }
         // Not Map.copyOf: that leaves iteration order unspecified, and commands() should
-        // stay in a stable order for /help and Telegram command registration.
+        // stay in a stable order.
         this.commandsByName = Collections.unmodifiableMap(byName);
         this.commandsByButtonLabel = chatKeyboard.buttons().stream()
                 .collect(Collectors.toUnmodifiableMap(ReplyButton::label, ReplyButton::command));
@@ -87,9 +87,9 @@ public class CommandDispatcher {
     /**
      * All registered commands, in registration order.
      *
-     * <p>No production caller today: {@code /help} and the {@code /tasks} menu each build their
-     * own list from an {@code ObjectProvider<BotCommand>}, because as commands themselves they
-     * cannot depend on this dispatcher without a startup cycle.
+     * <p>No production caller today: the {@code /tasks} menu builds its own list from an
+     * {@code ObjectProvider<BotCommand>}, because as a command itself it cannot depend on
+     * this dispatcher without a startup cycle.
      */
     public List<BotCommand> commands() {
         return List.copyOf(commandsByName.values());
