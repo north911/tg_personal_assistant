@@ -11,11 +11,12 @@ import com.tgassistant.service.TaskService;
 /**
  * Everything you can do with tasks of one {@link TaskType}.
  *
- * <p>Tapped from the {@code /tasks} menu it offers one button per {@link TaskAction}; typed
- * with a description it adds tasks, e.g. {@code /day buy milk, walk the dog}.
+ * <p>Tapped from the {@code /tasks} menu it lists the tasks of its type and offers one button
+ * per {@link TaskAction} under them, so the list is in view while you act on it; typed with a
+ * description it adds tasks, e.g. {@code /day buy milk, walk the dog}.
  *
  * <p>The two cannot be confused because every action token starts with {@code :} —
- * {@code /day :view} runs the View action, while {@code /day view} adds a task called "view".
+ * {@code /day :add} runs the Add action, while {@code /day add} adds a task called "add".
  * Tokens are only ever produced by buttons, so the marker never has to be typed.
  *
  * <p>Actions are injected rather than enumerated here, so a new one is a {@code @Component}
@@ -36,8 +37,7 @@ public abstract class TaskTypeCommand implements BotCommand {
 
     @Override
     public String label() {
-        String type = typeLabel();
-        return Character.toUpperCase(type.charAt(0)) + type.substring(1) + " tasks";
+        return taskType.buttonLabel();
     }
 
     @Override
@@ -60,13 +60,17 @@ public abstract class TaskTypeCommand implements BotCommand {
                 .orElseGet(() -> addTasks(arguments));
     }
 
+    /**
+     * The tasks themselves, with the actions as buttons under them — reading the list and acting
+     * on it are the same step, so there is no separate View action to tap first.
+     */
     private CommandReply actionMenu(long chatId) {
         TaskActionContext context = context(chatId);
         List<ReplyButton> buttons = actions.stream()
                 .flatMap(action -> action.menuLabel().stream()
                         .map(menuLabel -> new ReplyButton(menuLabel, context.commandFor(action))))
                 .toList();
-        return CommandReply.withButtons("%s — what do you want to do?".formatted(label()), buttons);
+        return CommandReply.withButtons(TaskListFormatter.format(context.tasks(), taskType), buttons);
     }
 
     private CommandReply addTasks(String arguments) {

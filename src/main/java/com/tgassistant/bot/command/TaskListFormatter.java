@@ -7,8 +7,8 @@ import com.tgassistant.domain.Task;
 import com.tgassistant.domain.TaskType;
 
 /**
- * Renders a task list for the chat. Shared so {@code /tasks daily} and the <em>View</em>
- * action cannot drift into wording each other's answers differently.
+ * Renders a task list for the chat. Shared so {@code /tasks daily} and the task-type menu
+ * cannot drift into wording each other's answers differently.
  */
 public final class TaskListFormatter {
 

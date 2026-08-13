@@ -7,7 +7,6 @@ import com.tgassistant.bot.command.action.ClearAction;
 import com.tgassistant.bot.command.action.ClearConfirmedAction;
 import com.tgassistant.bot.command.action.DeleteAction;
 import com.tgassistant.bot.command.action.TaskAction;
-import com.tgassistant.bot.command.action.ViewAction;
 import com.tgassistant.domain.Task;
 import com.tgassistant.domain.TaskType;
 import com.tgassistant.service.TaskService;
@@ -49,13 +48,21 @@ class TaskTypeCommandTest {
         return new WeeklyTaskCommand(taskService, actions());
     }
 
+    private TaskTypeCommand dailyShopping() {
+        return new DailyShoppingCommand(taskService, actions());
+    }
+
+    private TaskTypeCommand globalShopping() {
+        return new GlobalShoppingCommand(taskService, actions());
+    }
+
     /**
      * The real actions in the order Spring's {@code @Order} gives them, so these tests cover
      * the wiring between command and actions rather than a stand-in for it.
      */
     private List<TaskAction> actions() {
         ClearConfirmedAction clearConfirmed = new ClearConfirmedAction();
-        return List.of(new ViewAction(), new AddAction(pendingInput), new DeleteAction(),
+        return List.of(new AddAction(pendingInput), new DeleteAction(),
                 new ClearAction(clearConfirmed), clearConfirmed);
     }
 
@@ -68,17 +75,35 @@ class TaskTypeCommandTest {
 
     // --- the menu reached by tapping "Daily tasks" -----------------------------------------
 
+    /**
+     * Tapping the type shows the tasks straight away — reading them is not an action of its own.
+     */
     @Test
-    void offersTheFourActionsWhenTappedFromTheMenu() {
+    void listsTheTasksWithTheActionsUnderThemWhenTappedFromTheMenu() {
+        when(taskService.tasksOfType(TaskType.DAILY))
+                .thenReturn(List.of(task(1, "buy milk"), task(2, "walk the dog")));
+
         CommandReply reply = daily().execute(request(""));
 
-        assertThat(reply.text()).isEqualTo("Daily tasks — what do you want to do?");
+        assertThat(reply.text()).isEqualTo("Your daily tasks:\n- buy milk\n- walk the dog");
         assertThat(reply.buttons()).containsExactly(
-                new ReplyButton("View", "/day :view"),
                 new ReplyButton("Add", "/day :add"),
                 new ReplyButton("Delete", "/day :delete"),
                 new ReplyButton("Delete all", "/day :clear"));
-        verifyNoInteractions(taskService);
+    }
+
+    /**
+     * An empty list still has to offer Add, or a fresh chat would be a dead end.
+     */
+    @Test
+    void stillOffersTheActionsWhenThereAreNoTasksYet() {
+        when(taskService.tasksOfType(TaskType.DAILY)).thenReturn(List.of());
+
+        CommandReply reply = daily().execute(request(""));
+
+        assertThat(reply.text()).isEqualTo("No daily tasks yet.");
+        assertThat(reply.buttons()).extracting(ReplyButton::label)
+                .containsExactly("Add", "Delete", "Delete all");
     }
 
     // --- adding, which is still what free text does -----------------------------------------
@@ -105,16 +130,44 @@ class TaskTypeCommandTest {
      */
     @Test
     void treatsAnActionWordWithoutTheMarkerAsATaskDescription() {
-        CommandReply reply = daily().execute(request("view"));
+        CommandReply reply = daily().execute(request("add"));
 
-        verify(taskService).addTasks(List.of("view"), TaskType.DAILY);
-        assertThat(reply.text()).isEqualTo("Added 1 daily task:\n- view");
+        verify(taskService).addTasks(List.of("add"), TaskType.DAILY);
+        assertThat(reply.text()).isEqualTo("Added 1 daily task:\n- add");
     }
 
     @Test
     void labelsItselfReadably() {
         assertThat(daily().label()).isEqualTo("Daily tasks");
         assertThat(weekly().label()).isEqualTo("Weekly tasks");
+        assertThat(dailyShopping().label()).isEqualTo("Daily shopping list");
+        assertThat(globalShopping().label()).isEqualTo("Global shopping list");
+    }
+
+    /**
+     * A shopping list is the same machinery under a different type, so the wording follows from
+     * the type alone — nothing about the actions is specific to chores.
+     */
+    @Test
+    void shoppingListsBehaveLikeAnyOtherType() {
+        when(taskService.tasksOfType(TaskType.GLOBAL_SHOPPING))
+                .thenReturn(List.of(task(1, "printer paper")));
+
+        CommandReply reply = globalShopping().execute(new CommandRequest("/shopglobal", "", 42L));
+
+        assertThat(reply.text()).isEqualTo("Your global shopping tasks:\n- printer paper");
+        assertThat(reply.buttons()).containsExactly(
+                new ReplyButton("Add", "/shopglobal :add"),
+                new ReplyButton("Delete", "/shopglobal :delete"),
+                new ReplyButton("Delete all", "/shopglobal :clear"));
+    }
+
+    @Test
+    void storesDescriptionsOnTheShoppingListItWasTypedOn() {
+        CommandReply reply = dailyShopping().execute(new CommandRequest("/shopday", "milk, bread", 42L));
+
+        verify(taskService).addTasks(List.of("milk", "bread"), TaskType.DAILY_SHOPPING);
+        assertThat(reply.text()).isEqualTo("Added 2 daily shopping tasks:\n- milk\n- bread");
     }
 
     /**
@@ -137,26 +190,6 @@ class TaskTypeCommandTest {
         weekly().execute(new CommandRequest("/week", ":add", 42L));
 
         assertThat(pendingInput.consume(42L)).contains("/week");
-    }
-
-    // --- viewing ----------------------------------------------------------------------------
-
-    @Test
-    void viewListsTheStoredTasks() {
-        when(taskService.tasksOfType(TaskType.DAILY))
-                .thenReturn(List.of(task(1, "buy milk"), task(2, "walk the dog")));
-
-        CommandReply reply = daily().execute(request(":view"));
-
-        assertThat(reply.text()).isEqualTo("Your daily tasks:\n- buy milk\n- walk the dog");
-        assertThat(reply.hasButtons()).isFalse();
-    }
-
-    @Test
-    void viewSaysSoWhenThereAreNone() {
-        when(taskService.tasksOfType(TaskType.DAILY)).thenReturn(List.of());
-
-        assertThat(daily().execute(request(":view")).text()).isEqualTo("No daily tasks yet.");
     }
 
     // --- deleting ---------------------------------------------------------------------------

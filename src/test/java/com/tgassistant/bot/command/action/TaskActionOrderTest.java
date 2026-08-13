@@ -22,18 +22,17 @@ class TaskActionOrderTest {
                 new ClearAction(new ClearConfirmedAction()),
                 new ClearConfirmedAction(),
                 new DeleteAction(),
-                new AddAction(new PendingInputStore()),
-                new ViewAction()));
+                new AddAction(new PendingInputStore())));
 
         AnnotationAwareOrderComparator.sort(actions);
 
         assertThat(actions).extracting(action -> action.getClass().getSimpleName()).containsExactly(
-                "ViewAction", "AddAction", "DeleteAction", "ClearAction", "ClearConfirmedAction");
+                "AddAction", "DeleteAction", "ClearAction", "ClearConfirmedAction");
     }
 
     @Test
     void everyActionTokenIsMarkedAndUnique() {
-        List<TaskAction> actions = List.of(new ViewAction(), new AddAction(new PendingInputStore()), new DeleteAction(),
+        List<TaskAction> actions = List.of(new AddAction(new PendingInputStore()), new DeleteAction(),
                 new ClearAction(new ClearConfirmedAction()), new ClearConfirmedAction());
 
         assertThat(actions).allSatisfy(action -> assertThat(action.token()).startsWith(":"));

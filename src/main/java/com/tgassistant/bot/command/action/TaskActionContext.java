@@ -26,7 +26,7 @@ public record TaskActionContext(TaskService taskService, TaskType taskType, Stri
     }
 
     /**
-     * Callback data that runs {@code action} on this task type, e.g. {@code /day :view}.
+     * Callback data that runs {@code action} on this task type, e.g. {@code /day :add}.
      */
     public String commandFor(TaskAction action) {
         return "%s %s".formatted(commandName, action.token());

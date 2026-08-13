@@ -63,6 +63,19 @@ class TasksCommandTest {
         assertThat(reply.hasButtons()).isFalse();
     }
 
+    /**
+     * A two-word type is matched whole: everything after the command is one argument, so the
+     * space inside "daily shopping" never splits it.
+     */
+    @Test
+    void listsTasksOfATwoWordType() {
+        when(taskService.tasksOfType(TaskType.DAILY_SHOPPING))
+                .thenReturn(List.of(new Task("milk", TaskType.DAILY_SHOPPING)));
+
+        assertThat(commandWith().execute(request("daily shopping")).text())
+                .isEqualTo("Your daily shopping tasks:\n- milk");
+    }
+
     @Test
     void matchesTheTypeIgnoringCase() {
         when(taskService.tasksOfType(TaskType.WEEKLY))
@@ -82,7 +95,8 @@ class TasksCommandTest {
     @Test
     void repliesWithTheKnownTypesForAnUnknownOne() {
         assertThat(commandWith().execute(request("monthly")).text())
-                .isEqualTo("Unknown task type 'monthly'. Expected one of: daily, weekly");
+                .isEqualTo("Unknown task type 'monthly'. Expected one of: "
+                        + "daily, weekly, daily shopping, global shopping");
         verifyNoInteractions(taskService);
     }
 

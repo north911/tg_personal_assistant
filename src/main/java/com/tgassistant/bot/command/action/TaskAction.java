@@ -5,7 +5,7 @@ import java.util.Optional;
 import com.tgassistant.bot.command.CommandReply;
 
 /**
- * One thing you can do with tasks of a given type — view them, delete one, and so on.
+ * One thing you can do with tasks of a given type — add one, delete one, and so on.
  *
  * <p>Every implementation is a Spring bean; {@code TaskTypeCommand} collects them all and
  * selects by {@link #token()}, so adding an action means adding a {@code @Component} — there
@@ -17,7 +17,7 @@ import com.tgassistant.bot.command.CommandReply;
 public interface TaskAction {
 
     /**
-     * Marker word that selects this action, e.g. {@code :view}. The leading {@code :} is what
+     * Marker word that selects this action, e.g. {@code :add}. The leading {@code :} is what
      * keeps actions out of the space of things a user might type as a task description, so
      * every token must carry it.
      */
